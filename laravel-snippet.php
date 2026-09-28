@@ -1,3 +1,5 @@
+<?php
+
 public function approveLeaves(Request $request)
 {
     $leaves = Leave::where('status', 'pending')->get();
