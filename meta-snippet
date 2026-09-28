@@ -1,0 +1,50 @@
+function approvePendingLeaves(managerId):
+
+    leaves = Database.query(
+        "SELECT *
+         FROM leaves
+         WHERE status = 'pending'"
+    )
+
+    approvedLeaves = []
+
+    for each leave in leaves:
+
+        employee = Database.query(
+            "SELECT
+                e.id,
+                e.email,
+                e.departmentId,
+                d.id AS departmentId,
+                d.managerId
+             FROM employees e
+             JOIN departments d
+                 ON d.id = e.departmentId
+             WHERE e.id = :employeeId",
+            employeeId = leave.employeeId
+        )
+
+        if employee is null:
+            continue
+
+        if employee.managerId != managerId:
+            continue
+
+        update = Database.execute(
+            "UPDATE leaves
+             SET status = 'approved',
+                 approvedBy = :managerId
+             WHERE id = :leaveId",
+            managerId = managerId,
+            leaveId = leave.id
+        )
+
+        Mail.send(
+            to = employee.email,
+            subject = "Leave approved",
+            data = leave
+        )
+
+        approvedLeaves.add(leave)
+
+    return approvedLeaves
